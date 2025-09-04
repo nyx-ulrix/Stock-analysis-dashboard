@@ -7,7 +7,6 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
-    strictPort: false, // Allow Vite to try the next available port if 3000 is in use
-    host: true // Allow external connections
+    strictPort: false // Allow Vite to try the next available port if 3000 is in use
   }
 })

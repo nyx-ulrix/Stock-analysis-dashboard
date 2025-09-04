@@ -27,26 +27,24 @@ A comprehensive stock market analysis tool that combines Python backend processi
 
 -   **Python 3.8+** - [Download from python.org](https://www.python.org/downloads/)
 -   **Node.js 16+** - [Download from nodejs.org](https://nodejs.org/)
--   **Git** - [Download from git-scm.com](https://git-scm.com/)
 
-### One-Command Setup
+### Installation & Running
 
-**Windows:**
+1. **Start the Python Backend**:
 
-```cmd
-start_all.bat
-```
+    ```cmd
+    cd backend
+    python -m venv venv
+    call venv\Scripts\activate
+    pip install -r requirements.txt
+    python app.py
+    ```
 
-**macOS/Linux:**
-
-```bash
-chmod +x start_all.sh
-./start_all.sh
-```
-
-### Manual Setup
-
-See [SETUP.md](SETUP.md) for detailed installation instructions.
+2. **Start the React Frontend** (in a new terminal):
+    ```cmd
+    npm install
+    npm run dev
+    ```
 
 ### Access the Application
 
