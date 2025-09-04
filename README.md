@@ -21,25 +21,6 @@ A comprehensive stock market analysis tool that combines Python backend processi
 -   Optimized Python backend with Flask
 -   Interactive data visualization using matplotlib
 
-## Project Structure
-
-```
-stock-analysis-dashboard/
-├── backend/
-│   ├── app.py              # Flask backend with all analysis functions
-│   └── requirements.txt    # Python dependencies
-├── src/
-│   ├── App.tsx            # Main React component
-│   ├── main.tsx           # React entry point
-│   └── index.css          # Styling
-├── sample_data.csv        # Sample stock data for testing
-├── start_backend.bat      # Windows script to start Python backend
-├── start_frontend.bat     # Windows script to start React frontend
-└── README.md             # This file
-```
-
-## Quick Start
-
 ### Prerequisites
 
 -   Python 3.8+ installed
@@ -64,15 +45,11 @@ stock-analysis-dashboard/
     ```
 
 2. **Start the React Frontend** (in a new terminal):
-
-    ```bash
-    # Windows
-    start_frontend.bat
-
-    # Or manually:
+   
+```bash
     npm install
     npm run dev
-    ```
+```
 
 3. **Open your browser** and navigate to `http://localhost:5173`
 
@@ -166,19 +143,3 @@ The system includes comprehensive validation with 5+ test cases covering:
 -   **TypeScript**: Type-safe JavaScript
 -   **Tailwind CSS**: Utility-first CSS framework
 -   **Vite**: Fast build tool and dev server
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
-
-## License
-
-This project is licensed under the ISC License.
-
-## Sample Data
-
-A sample CSV file (`sample_data.csv`) is included for testing purposes. It contains 20 days of mock stock data with realistic price movements and volume patterns.
