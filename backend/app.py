@@ -7,30 +7,70 @@
 
 # Import necessary libraries for data processing and web API
 import warnings
-from datetime import datetime
-import os
 import base64
 import io
 
 # Data visualization library - creates charts and graphs
-import matplotlib.pyplot as plt
 import matplotlib
+import matplotlib.pyplot as plt
 
 # Web framework for creating REST API endpoints
-from flask import Flask, request, jsonify, send_file
-from flask_cors import CORS  # Allows frontend to communicate with backend
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 # Data manipulation libraries
-import pandas as pd  # For working with CSV data and dataframes
-import numpy as np   # For mathematical calculations
+import pandas as pd
+import numpy as np
 
 # Configure matplotlib to work without a display (for server environments)
 matplotlib.use('Agg')  # Use non-interactive backend
 warnings.filterwarnings('ignore')  # Suppress warning messages
 
+# =============================================================================
+# CONSTANTS
+# =============================================================================
+DEFAULT_SMA_WINDOW = 5
+REQUIRED_COLUMNS = ['date', 'open', 'high', 'low', 'close', 'volume']
+API_BASE_URL = 'http://127.0.0.1:5000'
+
 # Initialize Flask application
 app = Flask(__name__)
 CORS(app)  # Enable Cross-Origin Resource Sharing for frontend communication
+
+# Global variable to store uploaded data (in production, use a database)
+stock_data = None
+
+
+# =============================================================================
+# UTILITY FUNCTIONS
+# =============================================================================
+
+def safe_float(value):
+    """Convert value to float, return None if NaN or invalid."""
+    if pd.isna(value):
+        return None
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return None
+
+
+def serialize_series(series):
+    """Convert pandas Series to JSON-serializable list, replacing NaN with None."""
+    return series.replace({np.nan: None}).tolist()
+
+
+def create_error_response(message, status_code=400):
+    """Create standardized error response."""
+    return jsonify({'error': message}), status_code
+
+
+def create_success_response(data, message=None):
+    """Create standardized success response."""
+    response = data
+    if message:
+        response = {'message': message, **data}
+    return jsonify(response)
 
 
 class StockAnalyzer:
@@ -61,7 +101,7 @@ class StockAnalyzer:
         # Sort data by date and reset index for consistent ordering
         self.data = self.data.sort_values('date').reset_index(drop=True)
 
-    def calculate_sma(self, window=5):
+    def calculate_sma(self, window=DEFAULT_SMA_WINDOW):
         """
         Calculate Simple Moving Average (SMA) for closing prices.
 
@@ -74,7 +114,6 @@ class StockAnalyzer:
         Returns:
             pandas.Series: SMA values (NaN for first window-1 values)
         """
-        # Rolling mean calculates average over the specified window
         return self.data['close'].rolling(window=window).mean()
 
     def calculate_daily_returns(self):
@@ -310,28 +349,25 @@ def upload_file():
     """
     # Check if a file was actually uploaded
     if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
+        return create_error_response('No file provided')
 
     file = request.files['file']
 
     # Check if user selected a file (not just submitted empty form)
     if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
+        return create_error_response('No file selected')
 
     # Ensure the file is a CSV file
     if not file.filename.endswith('.csv'):
-        return jsonify({'error': 'File must be a CSV'}), 400
+        return create_error_response('File must be a CSV')
 
     try:
         # Read the CSV file into a pandas DataFrame
         df = pd.read_csv(file)
 
-        # Define the required columns for stock analysis
-        required_columns = ['date', 'open', 'high', 'low', 'close', 'volume']
-        missing_columns = [
-            col for col in required_columns if col not in df.columns]
-
         # Check if all required columns are present
+        missing_columns = [
+            col for col in REQUIRED_COLUMNS if col not in df.columns]
         if missing_columns:
             return jsonify({
                 'error': f'Missing required columns: {missing_columns}',
@@ -339,24 +375,21 @@ def upload_file():
             }), 400
 
         # Store the data globally for use by other endpoints
-        # Note: In a production app, you'd use a database instead
         global stock_data
         stock_data = df
 
         # Return success response with file information
-        return jsonify({
-            'message': 'File uploaded successfully',
+        return create_success_response({
             'rows': len(df),
             'columns': list(df.columns),
             'date_range': {
                 'start': df['date'].min(),
                 'end': df['date'].max()
             }
-        })
+        }, 'File uploaded successfully')
 
     except Exception as e:
-        # Return error if something went wrong during file processing
-        return jsonify({'error': f'Error processing file: {str(e)}'}), 400
+        return create_error_response(f'Error processing file: {str(e)}')
 
 
 @app.route('/analyze', methods=['POST'])
@@ -379,11 +412,11 @@ def analyze_stock():
     try:
         # Get the SMA window from the request (default to 5 days)
         data = request.get_json()
-        sma_window = data.get('sma_window', 5)
+        sma_window = data.get('sma_window', DEFAULT_SMA_WINDOW)
 
         # Check if data has been uploaded
-        if 'stock_data' not in globals():
-            return jsonify({'error': 'No data uploaded. Please upload a CSV file first.'}), 400
+        if stock_data is None:
+            return create_error_response('No data uploaded. Please upload a CSV file first.')
 
         # Create a new analyzer instance with the uploaded data
         analyzer = StockAnalyzer(stock_data)
@@ -397,19 +430,14 @@ def analyze_stock():
         # Create the visualization chart
         chart_base64 = analyzer.create_visualization(sma_window)
 
-        # Prepare data for JSON response
-        # Convert NaN values to None for proper JSON serialization
-        sma_values = sma.replace({np.nan: None}).tolist()
-        daily_returns_values = daily_returns.replace({np.nan: None}).tolist()
-
         # Compile all results into a comprehensive response
         results = {
             'sma': {
-                'values': sma_values,
+                'values': serialize_series(sma),
                 'dates': analyzer.data['date'].iloc[sma_window-1:].dt.strftime('%Y-%m-%d').tolist()
             },
             'daily_returns': {
-                'values': daily_returns_values,
+                'values': serialize_series(daily_returns),
                 'dates': analyzer.data['date'].iloc[1:].dt.strftime('%Y-%m-%d').tolist()
             },
             'runs_analysis': runs_stats,
@@ -421,19 +449,18 @@ def analyze_stock():
             'summary': {
                 'total_days': int(len(analyzer.data)),
                 'price_range': {
-                    'min': float(analyzer.data['close'].min()) if not pd.isna(analyzer.data['close'].min()) else None,
-                    'max': float(analyzer.data['close'].max()) if not pd.isna(analyzer.data['close'].max()) else None
+                    'min': safe_float(analyzer.data['close'].min()),
+                    'max': safe_float(analyzer.data['close'].max())
                 },
-                'avg_volume': float(analyzer.data['volume'].mean()) if not pd.isna(analyzer.data['volume'].mean()) else None,
-                'volatility': float(daily_returns.std()) if not pd.isna(daily_returns.std()) else None
+                'avg_volume': safe_float(analyzer.data['volume'].mean()),
+                'volatility': safe_float(daily_returns.std())
             }
         }
 
         return jsonify(results)
 
     except Exception as e:
-        # Return error if analysis fails
-        return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
+        return create_error_response(f'Analysis failed: {str(e)}', 500)
 
 
 @app.route('/validate', methods=['POST'])
@@ -471,7 +498,7 @@ def validate_results():
         test_cases.append({
             'test': 'SMA(3) calculation',
             'expected': expected_sma_3,
-            'actual': sma_3.replace({np.nan: None}).tolist(),
+            'actual': serialize_series(sma_3),
             'passed': np.allclose(sma_3.dropna(), [x for x in expected_sma_3 if x is not None], rtol=1e-10)
         })
 
@@ -483,7 +510,7 @@ def validate_results():
         test_cases.append({
             'test': 'Daily returns calculation',
             'expected': expected_returns,
-            'actual': daily_returns.replace({np.nan: None}).tolist(),
+            'actual': serialize_series(daily_returns),
             'passed': np.allclose(daily_returns.dropna(), [x for x in expected_returns if x is not None], rtol=1e-10)
         })
 
