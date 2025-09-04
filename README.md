@@ -21,37 +21,37 @@ A comprehensive stock market analysis tool that combines Python backend processi
 -   Optimized Python backend with Flask
 -   Interactive data visualization using matplotlib
 
+## Quick Start
+
 ### Prerequisites
 
--   Python 3.8+ installed
--   Node.js 16+ installed
--   npm or yarn package manager
+-   **Python 3.8+** - [Download from python.org](https://www.python.org/downloads/)
+-   **Node.js 16+** - [Download from nodejs.org](https://nodejs.org/)
+-   **Git** - [Download from git-scm.com](https://git-scm.com/)
 
-### Installation & Running
+### One-Command Setup
 
-1. **Start the Python Backend**:
+**Windows:**
 
-    ```bash
-    # Windows
-    start_backend.bat
-
-    # Or manually:
-    cd backend
-    python -m venv venv
-    venv\Scripts\activate  # On Windows
-    # source venv/bin/activate  # On macOS/Linux
-    pip install -r requirements.txt
-    python app.py
-    ```
-
-2. **Start the React Frontend** (in a new terminal):
-   
-```bash
-    npm install
-    npm run dev
+```cmd
+start_all.bat
 ```
 
-3. **Open your browser** and navigate to `http://localhost:5173`
+**macOS/Linux:**
+
+```bash
+chmod +x start_all.sh
+./start_all.sh
+```
+
+### Manual Setup
+
+See [SETUP.md](SETUP.md) for detailed installation instructions.
+
+### Access the Application
+
+-   **Backend API:** http://localhost:5000
+-   **Frontend UI:** http://localhost:3000 (or next available port)
 
 ## Usage
 
