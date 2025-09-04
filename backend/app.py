@@ -4,12 +4,26 @@
 # This is the backend server that handles stock data analysis requests.
 # It provides REST API endpoints for uploading CSV files and performing
 # various financial calculations and visualizations.
+#
+# Key responsibilities:
+# - Providing REST API endpoints for file upload and analysis
+# - Processing CSV files containing stock data
+# - Performing financial calculations (SMA, returns, runs analysis, etc.)
+# - Generating data visualizations and charts
+# - Validating data and providing error handling
+# - Running automated tests to verify algorithm correctness
 
-# Import necessary libraries for data processing and web API
-import warnings
-import base64
-import io
+# =============================================================================
+# STANDARD LIBRARY IMPORTS
+# =============================================================================
+# Python standard library modules for basic functionality
+import warnings  # For suppressing warning messages
+import base64    # For encoding chart images as base64 strings
+import io        # For creating in-memory file-like objects
 
+# =============================================================================
+# THIRD-PARTY LIBRARY IMPORTS
+# =============================================================================
 # Data visualization library - creates charts and graphs
 import matplotlib
 import matplotlib.pyplot as plt
@@ -18,35 +32,66 @@ import matplotlib.pyplot as plt
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-# Data manipulation libraries
-import pandas as pd
-import numpy as np
+# Data manipulation and analysis libraries
+import pandas as pd  # For data manipulation and analysis
+import numpy as np   # For numerical computations
 
 # Configure matplotlib to work without a display (for server environments)
 matplotlib.use('Agg')  # Use non-interactive backend
 warnings.filterwarnings('ignore')  # Suppress warning messages
 
 # =============================================================================
-# CONSTANTS
+# APPLICATION CONSTANTS
 # =============================================================================
+# Configuration constants used throughout the application
+
+# Default window size for Simple Moving Average calculation (in days)
 DEFAULT_SMA_WINDOW = 5
+
+# Required columns that must be present in uploaded CSV files
 REQUIRED_COLUMNS = ['date', 'open', 'high', 'low', 'close', 'volume']
+
+# Base URL for the API (used by frontend for making requests)
 API_BASE_URL = 'http://127.0.0.1:5000'
 
-# Initialize Flask application
+# =============================================================================
+# FLASK APPLICATION INITIALIZATION
+# =============================================================================
+# Initialize the Flask web application
 app = Flask(__name__)
-CORS(app)  # Enable Cross-Origin Resource Sharing for frontend communication
 
-# Global variable to store uploaded data (in production, use a database)
+# Enable Cross-Origin Resource Sharing (CORS) to allow frontend communication
+# This allows the React frontend running on a different port to make API calls
+CORS(app)
+
+# =============================================================================
+# GLOBAL DATA STORAGE
+# =============================================================================
+# Global variable to store uploaded stock data
+# NOTE: In a production environment, this should be replaced with a proper database
+# For this demo application, we store data in memory for simplicity
 stock_data = None
 
 
 # =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
+# Helper functions used throughout the application for data processing,
+# error handling, and response formatting
 
 def safe_float(value):
-    """Convert value to float, return None if NaN or invalid."""
+    """
+    Safely convert a value to float, handling NaN and invalid values.
+
+    This function is used to ensure that numeric values are properly converted
+    to floats for JSON serialization, replacing invalid values with None.
+
+    Args:
+        value: The value to convert to float
+
+    Returns:
+        float or None: The converted float value, or None if conversion fails
+    """
     if pd.isna(value):
         return None
     try:
@@ -56,17 +101,46 @@ def safe_float(value):
 
 
 def serialize_series(series):
-    """Convert pandas Series to JSON-serializable list, replacing NaN with None."""
+    """
+    Convert a pandas Series to a JSON-serializable list.
+
+    This function replaces NaN values with None to ensure proper JSON serialization,
+    as JSON doesn't support NaN values.
+
+    Args:
+        series: The pandas Series to convert
+
+    Returns:
+        list: A list with NaN values replaced by None
+    """
     return series.replace({np.nan: None}).tolist()
 
 
 def create_error_response(message, status_code=400):
-    """Create standardized error response."""
+    """
+    Create a standardized error response for API endpoints.
+
+    Args:
+        message (str): The error message to return
+        status_code (int): HTTP status code (default: 400)
+
+    Returns:
+        tuple: (JSON response, status code) for Flask
+    """
     return jsonify({'error': message}), status_code
 
 
 def create_success_response(data, message=None):
-    """Create standardized success response."""
+    """
+    Create a standardized success response for API endpoints.
+
+    Args:
+        data: The data to return in the response
+        message (str, optional): Additional message to include
+
+    Returns:
+        JSON response: The formatted success response
+    """
     response = data
     if message:
         response = {'message': message, **data}

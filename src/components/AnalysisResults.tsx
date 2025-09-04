@@ -1,19 +1,45 @@
 // =============================================================================
 // ANALYSIS RESULTS COMPONENT
 // =============================================================================
+// This component displays the comprehensive results of stock analysis.
+// It renders charts, statistics, and detailed analysis data in an
+// organized and visually appealing format.
+//
+// Key responsibilities:
+// - Displaying the generated price analysis chart
+// - Showing summary statistics in card format
+// - Presenting runs analysis (price streaks) with color coding
+// - Displaying maximum profit analysis with transaction details
+// - Organizing data in a clear, readable layout
 
+// Type definition for analysis results data structure
 import { AnalysisResults } from '../types'
 
+/**
+ * Props interface for the AnalysisResultsComponent
+ */
 interface AnalysisResultsProps {
-  results: AnalysisResults
+  results: AnalysisResults  // The complete analysis results from the backend
 }
 
+/**
+ * AnalysisResultsComponent that displays comprehensive stock analysis results
+ * 
+ * This component renders multiple sections of analysis data:
+ * 1. Price chart visualization with moving averages and runs
+ * 2. Summary statistics cards showing key metrics
+ * 3. Runs analysis showing price streaks and trends
+ * 4. Maximum profit analysis with detailed transaction breakdown
+ * 
+ * @param props - Component props containing the analysis results
+ */
 export function AnalysisResultsComponent({ results }: AnalysisResultsProps) {
   return (
     <div className="space-y-8">
-      {/* Price Chart Visualization */}
+      {/* Price Chart Visualization Section */}
       <div className="bg-gray-800 rounded-lg p-6">
         <h2 className="text-2xl font-semibold mb-4">Price Analysis Chart</h2>
+        {/* Display the base64-encoded chart image from the backend */}
         <img 
           src={`data:image/png;base64,${results.chart}`} 
           alt="Stock Analysis Chart"
@@ -21,15 +47,17 @@ export function AnalysisResultsComponent({ results }: AnalysisResultsProps) {
         />
       </div>
 
-      {/* Summary Statistics Cards */}
+      {/* Summary Statistics Cards Section */}
       <div className="bg-gray-800 rounded-lg p-6">
         <h2 className="text-2xl font-semibold mb-4">Summary Statistics</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Total Days Card */}
           <div className="bg-gray-700 p-4 rounded">
             <div className="text-sm text-gray-300">Total Days</div>
             <div className="text-xl font-bold">{results.summary.total_days}</div>
           </div>
           
+          {/* Price Range Card */}
           <div className="bg-gray-700 p-4 rounded">
             <div className="text-sm text-gray-300">Price Range</div>
             <div className="text-lg font-bold">
@@ -37,11 +65,13 @@ export function AnalysisResultsComponent({ results }: AnalysisResultsProps) {
             </div>
           </div>
           
+          {/* Average Volume Card */}
           <div className="bg-gray-700 p-4 rounded">
             <div className="text-sm text-gray-300">Avg Volume</div>
             <div className="text-xl font-bold">{results.summary.avg_volume.toLocaleString()}</div>
           </div>
           
+          {/* Volatility Card */}
           <div className="bg-gray-700 p-4 rounded">
             <div className="text-sm text-gray-300">Volatility</div>
             <div className="text-xl font-bold">{(results.summary.volatility * 100).toFixed(2)}%</div>
@@ -49,25 +79,29 @@ export function AnalysisResultsComponent({ results }: AnalysisResultsProps) {
         </div>
       </div>
 
-      {/* Runs Analysis - Price Streaks */}
+      {/* Runs Analysis Section - Price Streaks and Trends */}
       <div className="bg-gray-800 rounded-lg p-6">
         <h2 className="text-2xl font-semibold mb-4">Runs Analysis</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Upward Runs Count */}
           <div className="bg-green-700 p-4 rounded">
             <div className="text-sm text-green-200">Upward Runs</div>
             <div className="text-xl font-bold">{results.runs_analysis.total_upward_runs}</div>
           </div>
           
+          {/* Downward Runs Count */}
           <div className="bg-red-700 p-4 rounded">
             <div className="text-sm text-red-200">Downward Runs</div>
             <div className="text-xl font-bold">{results.runs_analysis.total_downward_runs}</div>
           </div>
           
+          {/* Longest Upward Streak */}
           <div className="bg-green-600 p-4 rounded">
             <div className="text-sm text-green-200">Longest Upward Streak</div>
             <div className="text-xl font-bold">{results.runs_analysis.longest_upward_streak} days</div>
           </div>
           
+          {/* Longest Downward Streak */}
           <div className="bg-red-600 p-4 rounded">
             <div className="text-sm text-red-200">Longest Downward Streak</div>
             <div className="text-xl font-bold">{results.runs_analysis.longest_downward_streak} days</div>
@@ -75,11 +109,11 @@ export function AnalysisResultsComponent({ results }: AnalysisResultsProps) {
         </div>
       </div>
 
-      {/* Maximum Profit Analysis */}
+      {/* Maximum Profit Analysis Section */}
       <div className="bg-gray-800 rounded-lg p-6">
         <h2 className="text-2xl font-semibold mb-4">Maximum Profit Analysis</h2>
         
-        {/* Profit Summary */}
+        {/* Profit Summary Card */}
         <div className="bg-gray-700 p-4 rounded mb-4">
           <div className="text-lg font-bold text-green-400">
             Total Maximum Profit: ${results.max_profit.total_profit.toFixed(2)}
@@ -89,7 +123,7 @@ export function AnalysisResultsComponent({ results }: AnalysisResultsProps) {
           </div>
         </div>
         
-        {/* Transaction Details Table */}
+        {/* Transaction Details Table - Only show if there are transactions */}
         {results.max_profit.transactions.length > 0 && (
           <div>
             <h3 className="text-lg font-semibold mb-2">Transaction Details</h3>
@@ -105,6 +139,7 @@ export function AnalysisResultsComponent({ results }: AnalysisResultsProps) {
                   </tr>
                 </thead>
                 <tbody>
+                  {/* Render each transaction as a table row */}
                   {results.max_profit.transactions.map((transaction, index) => (
                     <tr key={index} className="border-b border-gray-700">
                       <td className="py-2">{transaction.buy_day}</td>

@@ -1,12 +1,26 @@
 // =============================================================================
-// STOCK ANALYSIS DASHBOARD - FRONTEND
+// STOCK ANALYSIS DASHBOARD - MAIN APPLICATION COMPONENT
 // =============================================================================
-// This is the main React component that provides the user interface for
-// uploading stock data and viewing analysis results.
+// This is the main React component that orchestrates the entire application.
+// It manages the application state and coordinates between different components
+// to provide a complete stock analysis experience.
+//
+// Key responsibilities:
+// - Managing global application state (file upload, analysis results, etc.)
+// - Handling user interactions and API calls
+// - Coordinating data flow between components
+// - Providing the main UI layout and structure
 
+// React hooks for managing component state
 import { useState } from 'react'
+
+// Type definitions for our data structures
 import { AnalysisResults, ValidationResults } from './types'
+
+// API functions for communicating with the backend
 import { runAnalysis, runValidation } from './api'
+
+// UI components that make up the application interface
 import { FileUpload } from './components/FileUpload'
 import { AnalysisControls } from './components/AnalysisControls'
 import { StatusMessage } from './components/StatusMessage'
@@ -21,40 +35,72 @@ function App() {
   // =============================================================================
   // STATE MANAGEMENT
   // =============================================================================
-  const [file, setFile] = useState<File | null>(null)
-  const [uploadStatus, setUploadStatus] = useState<string>('')
-  const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null)
-  const [validationResults, setValidationResults] = useState<ValidationResults | null>(null)
-  const [smaWindow, setSmaWindow] = useState<number>(5)
-  const [loading, setLoading] = useState<boolean>(false)
+  // React state variables that control the application's behavior and display.
+  // Each state variable has a corresponding setter function to update it.
+  
+  // File management state
+  const [file, setFile] = useState<File | null>(null)  // Currently selected CSV file
+  
+  // UI feedback state
+  const [uploadStatus, setUploadStatus] = useState<string>('')  // Status messages for user
+  const [loading, setLoading] = useState<boolean>(false)  // Loading indicator state
+  
+  // Analysis results state
+  const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null)  // Stock analysis data
+  const [validationResults, setValidationResults] = useState<ValidationResults | null>(null)  // Test validation results
+  
+  // Analysis configuration state
+  const [smaWindow, setSmaWindow] = useState<number>(5)  // Simple Moving Average window size
 
   // =============================================================================
   // EVENT HANDLERS
   // =============================================================================
+  // Functions that respond to user interactions and update the application state.
+  // These handlers are passed down to child components as props.
   
+  /**
+   * Handles file selection from the file upload component
+   * @param selectedFile - The CSV file selected by the user
+   */
   const handleFileSelect = (selectedFile: File) => {
     setFile(selectedFile)
   }
 
+  /**
+   * Handles successful file upload
+   * @param message - Success message to display to the user
+   */
   const handleUploadSuccess = (message: string) => {
     setUploadStatus(message)
   }
 
+  /**
+   * Handles file upload errors
+   * @param error - Error message to display to the user
+   */
   const handleUploadError = (error: string) => {
     setUploadStatus(error)
   }
 
+  /**
+   * Runs the stock analysis with the current SMA window setting
+   * This function calls the backend API to perform comprehensive stock analysis
+   */
   const handleRunAnalysis = async () => {
+    // Validate that a file has been uploaded before running analysis
     if (!file) {
       setUploadStatus('❌ Please upload a file first')
       return
     }
 
+    // Set loading state and show progress message
     setLoading(true)
     setUploadStatus('Running analysis...')
 
+    // Call the backend API to perform analysis
     const result = await runAnalysis(smaWindow)
     
+    // Handle the API response
     if (result.data) {
       setAnalysisResults(result.data)
       setUploadStatus('✅ Analysis completed successfully!')
@@ -62,15 +108,23 @@ function App() {
       setUploadStatus(`❌ Analysis failed: ${result.error}`)
     }
     
+    // Clear loading state
     setLoading(false)
   }
 
+  /**
+   * Runs validation tests to verify the analysis algorithms are working correctly
+   * This function calls the backend API to run automated tests
+   */
   const handleRunValidation = async () => {
+    // Set loading state and show progress message
     setLoading(true)
     setUploadStatus('Running validation tests...')
 
+    // Call the backend API to run validation tests
     const result = await runValidation()
     
+    // Handle the API response
     if (result.data) {
       setValidationResults(result.data)
       setUploadStatus(`✅ Validation completed! ${result.data.summary.passed}/${result.data.summary.total} tests passed`)
@@ -78,29 +132,31 @@ function App() {
       setUploadStatus(`❌ Validation failed: ${result.error}`)
     }
     
+    // Clear loading state
     setLoading(false)
   }
 
   // =============================================================================
   // RENDER COMPONENT
   // =============================================================================
+  // The JSX that defines the visual structure of the application.
+  // This is what gets rendered to the DOM when the component mounts.
   
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="container mx-auto px-4 py-8">
-        {/* Page Header */}
+        {/* Application Header */}
         <h1 className="text-4xl font-bold mb-8 text-center">Stock Analysis Dashboard</h1>
         
-        {/* File Upload Section */}
+        {/* File Upload Component - Allows users to select and upload CSV files */}
         <FileUpload
           onFileSelect={handleFileSelect}
           onUploadSuccess={handleUploadSuccess}
           onUploadError={handleUploadError}
-          loading={loading}
           setLoading={setLoading}
         />
 
-        {/* Analysis Controls */}
+        {/* Analysis Controls - Configuration and action buttons */}
         <AnalysisControls
           smaWindow={smaWindow}
           setSmaWindow={setSmaWindow}
@@ -110,15 +166,15 @@ function App() {
           loading={loading}
         />
 
-        {/* Status Messages */}
+        {/* Status Messages - Shows feedback to the user */}
         <StatusMessage message={uploadStatus} />
 
-        {/* Analysis Results */}
+        {/* Analysis Results - Displays charts and analysis data (only when available) */}
         {analysisResults && (
           <AnalysisResultsComponent results={analysisResults} />
         )}
 
-        {/* Validation Results */}
+        {/* Validation Results - Shows test results (only when available) */}
         {validationResults && (
           <ValidationResultsComponent results={validationResults} />
         )}
