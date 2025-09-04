@@ -1,0 +1,24 @@
+/* =============================================================================
+   STOCK ANALYSIS DASHBOARD - GLOBAL STYLES
+   =============================================================================
+   This file contains the global CSS styles for the application.
+   It uses Tailwind CSS for utility-first styling.
+   ============================================================================= */
+
+/* Import Tailwind CSS base, components, and utilities */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom base styles */
+@layer base {
+  /* Set the default font family for the entire application */
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  /* Apply dark theme colors to the body */
+  body {
+    @apply bg-gray-900 text-white;
+  }
+}
