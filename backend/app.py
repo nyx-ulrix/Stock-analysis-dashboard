@@ -399,8 +399,8 @@ def analyze_stock():
 
         # Prepare data for JSON response
         # Convert NaN values to None for proper JSON serialization
-        sma_values = sma.fillna(None).tolist()
-        daily_returns_values = daily_returns.fillna(None).tolist()
+        sma_values = sma.replace({np.nan: None}).tolist()
+        daily_returns_values = daily_returns.replace({np.nan: None}).tolist()
 
         # Compile all results into a comprehensive response
         results = {
@@ -466,29 +466,30 @@ def validate_results():
 
         # Test 1: Simple Moving Average calculation
         sma_3 = analyzer.calculate_sma(3)
-        expected_sma_3 = [np.nan, np.nan, 101.0, 102.0,
+        expected_sma_3 = [None, None, 101.0, 102.0,
                           103.0, 104.0, 105.0, 106.0, 107.0, 108.0]
         test_cases.append({
             'test': 'SMA(3) calculation',
             'expected': expected_sma_3,
-            'actual': sma_3.tolist(),
-            'passed': np.allclose(sma_3.dropna(), [x for x in expected_sma_3 if not np.isnan(x)], rtol=1e-10)
+            'actual': sma_3.replace({np.nan: None}).tolist(),
+            'passed': np.allclose(sma_3.dropna(), [x for x in expected_sma_3 if x is not None], rtol=1e-10)
         })
 
         # Test 2: Daily returns calculation
         daily_returns = analyzer.calculate_daily_returns()
-        expected_returns = [np.nan, 0.02, -0.0098, 0.0198,
-                            0.0194, -0.0095, 0.0192, 0.0189, -0.0093, 0.0187]
+        expected_returns = [None, 0.02, -0.009803921568627451, 0.019801980198019802,
+                            0.01941747572815534, -0.009523809523809523, 0.019230769230769232,
+                            0.018867924528301886, -0.009259259259259259, 0.018691588785046728]
         test_cases.append({
             'test': 'Daily returns calculation',
             'expected': expected_returns,
-            'actual': daily_returns.tolist(),
-            'passed': np.allclose(daily_returns.dropna(), [x for x in expected_returns if not np.isnan(x)], rtol=1e-4)
+            'actual': daily_returns.replace({np.nan: None}).tolist(),
+            'passed': np.allclose(daily_returns.dropna(), [x for x in expected_returns if x is not None], rtol=1e-10)
         })
 
         # Test 3: Maximum profit calculation
         max_profit, _ = analyzer.calculate_max_profit()
-        expected_profit = 8.0  # Sum of all positive daily changes
+        expected_profit = 12.0  # Sum of all positive daily changes: 2+2+2+2+2+2 = 12
         test_cases.append({
             'test': 'Max profit calculation',
             'expected': expected_profit,
