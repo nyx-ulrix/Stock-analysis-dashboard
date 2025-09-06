@@ -14,12 +14,14 @@
 
 // Type definition for analysis results data structure
 import { AnalysisResults } from '../types'
+import { InteractiveChart, DailyReturnsChart } from './InteractiveChart'
 
 /**
  * Props interface for the AnalysisResultsComponent
  */
 interface AnalysisResultsProps {
   results: AnalysisResults  // The complete analysis results from the backend
+  smaWindow: number        // SMA window size for interactive charts
 }
 
 /**
@@ -33,18 +35,42 @@ interface AnalysisResultsProps {
  * 
  * @param props - Component props containing the analysis results
  */
-export function AnalysisResultsComponent({ results }: AnalysisResultsProps) {
+export function AnalysisResultsComponent({ results, smaWindow }: AnalysisResultsProps) {
   return (
     <div className="space-y-8">
-      {/* Price Chart Visualization Section */}
-      <div className="bg-gray-800 rounded-lg p-6">
-        <h2 className="text-2xl font-semibold mb-4">Price Analysis Chart</h2>
-        {/* Display the base64-encoded chart image from the backend */}
-        <img 
-          src={`data:image/png;base64,${results.chart}`} 
-          alt="Stock Analysis Chart"
-          className="w-full h-auto rounded"
-        />
+      {/* Interactive Charts Section */}
+      <div className="space-y-6">
+        <div className="bg-gray-800 rounded-lg p-6">
+          <h2 className="text-2xl font-semibold mb-4">Interactive Price Analysis</h2>
+          <p className="text-gray-300 mb-4">
+            Hover over the chart to see detailed information for each day
+          </p>
+          {/* Interactive chart with hover functionality */}
+          <InteractiveChart data={results.chart_data} smaWindow={smaWindow} />
+        </div>
+
+        <div className="bg-gray-800 rounded-lg p-6">
+          <h2 className="text-2xl font-semibold mb-4">Daily Returns Analysis</h2>
+          <p className="text-gray-300 mb-4">
+            Interactive daily returns chart with hover details
+          </p>
+          {/* Interactive daily returns chart */}
+          <DailyReturnsChart data={results.chart_data} />
+        </div>
+
+        {/* Static Chart for Reference */}
+        <div className="bg-gray-800 rounded-lg p-6">
+          <h2 className="text-2xl font-semibold mb-4">Static Analysis Chart</h2>
+          <p className="text-gray-300 mb-4">
+            Traditional chart view for reference
+          </p>
+          {/* Display the base64-encoded chart image from the backend */}
+          <img 
+            src={`data:image/png;base64,${results.chart}`} 
+            alt="Stock Analysis Chart"
+            className="w-full h-auto rounded"
+          />
+        </div>
       </div>
 
       {/* Summary Statistics Cards Section */}

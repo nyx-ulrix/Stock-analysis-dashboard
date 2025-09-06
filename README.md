@@ -26,16 +26,43 @@ A comprehensive stock market analysis tool that combines Python backend processi
 ### Prerequisites
 
 -   **Python 3.8+** - [Download from python.org](https://www.python.org/downloads/)
+    -   ⚠️ **Windows users**: Make sure to check "Add Python to PATH" during installation
 -   **Node.js 16+** - [Download from nodejs.org](https://nodejs.org/)
 
-### Installation & Running
+### Automated Setup (Windows)
+
+**Option 1: Command Prompt**
+
+```cmd
+setup_windows.bat
+```
+
+**Option 2: PowerShell**
+
+```powershell
+.\setup_windows.ps1
+```
+
+### Manual Installation & Running
 
 1. **Start the Python Backend**:
+
+    **Windows Command Prompt:**
 
     ```cmd
     cd backend
     python -m venv venv
-    call venv\Scripts\activate
+    call venv\Scripts\activate.bat
+    pip install -r requirements.txt
+    python app.py
+    ```
+
+    **Windows PowerShell:**
+
+    ```powershell
+    Set-Location backend
+    python -m venv venv
+    .\venv\Scripts\Activate.ps1
     pip install -r requirements.txt
     python app.py
     ```
@@ -45,6 +72,13 @@ A comprehensive stock market analysis tool that combines Python backend processi
     npm install
     npm run dev
     ```
+
+### Quick Start Scripts (Windows)
+
+After setup, you can use these convenient scripts:
+
+-   **Backend**: Double-click `start_backend.bat`
+-   **Frontend**: Double-click `start_frontend.bat`
 
 ### Access the Application
 
@@ -123,6 +157,48 @@ The system includes comprehensive validation with 5+ test cases covering:
 -   **Memory Management**: Efficient data structures and garbage collection
 -   **Caching**: Results are cached to avoid redundant calculations
 -   **Async Processing**: Non-blocking API calls for better user experience
+
+## Troubleshooting (Windows)
+
+### Common Issues and Solutions
+
+**1. "Python is not recognized as an internal or external command"**
+
+-   Solution: Reinstall Python and check "Add Python to PATH" during installation
+-   Alternative: Add Python to PATH manually in System Environment Variables
+
+**2. "Execution Policy Error" in PowerShell**
+
+-   Solution: Run PowerShell as Administrator and execute:
+    ```powershell
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+    ```
+
+**3. "Port 5000 is already in use"**
+
+-   Solution: Kill the process using port 5000:
+    ```cmd
+    netstat -ano | findstr :5000
+    taskkill /PID <PID_NUMBER> /F
+    ```
+
+**4. "Virtual environment activation fails"**
+
+-   Command Prompt: Use `call venv\Scripts\activate.bat`
+-   PowerShell: Use `.\venv\Scripts\Activate.ps1`
+
+**5. "npm install fails"**
+
+-   Solution: Clear npm cache and try again:
+    ```cmd
+    npm cache clean --force
+    npm install
+    ```
+
+**6. "matplotlib backend error"**
+
+-   The application automatically handles Windows matplotlib configuration
+-   If issues persist, ensure you have the latest Visual C++ redistributables installed
 
 ## Technologies Used
 

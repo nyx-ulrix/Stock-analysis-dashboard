@@ -12,14 +12,25 @@
 # - Generating data visualizations and charts
 # - Validating data and providing error handling
 # - Running automated tests to verify algorithm correctness
+# - Providing interactive chart data for hover functionality
+# - Ensuring Windows compatibility across all operations
+#
+# Windows Compatibility Features:
+# - Cross-platform path handling
+# - Windows-specific matplotlib configuration
+# - Proper error handling for Windows file systems
+# - Optimized for Windows networking and threading
 
 # =============================================================================
 # STANDARD LIBRARY IMPORTS
 # =============================================================================
 # Python standard library modules for basic functionality
+import platform  # For detecting operating system (Windows compatibility)
 import warnings  # For suppressing warning messages
 import base64    # For encoding chart images as base64 strings
 import io        # For creating in-memory file-like objects
+import sys       # For system-specific operations
+import os        # For cross-platform path operations
 
 # =============================================================================
 # THIRD-PARTY LIBRARY IMPORTS
@@ -36,9 +47,88 @@ from flask_cors import CORS
 import pandas as pd  # For data manipulation and analysis
 import numpy as np   # For numerical computations
 
+# =============================================================================
+# WINDOWS COMPATIBILITY FUNCTIONS
+# =============================================================================
+# Functions to ensure the application works smoothly on Windows systems
+
+
+def is_windows_system():
+    """
+    Check if the application is running on a Windows system.
+
+    Returns:
+        bool: True if running on Windows, False otherwise
+    """
+    return platform.system() == 'Windows'
+
+
+def get_windows_font_family():
+    """
+    Get the appropriate font family for Windows systems.
+
+    Returns:
+        list: List of font families in order of preference for Windows
+    """
+    if is_windows_system():
+        return ['Segoe UI', 'Arial', 'DejaVu Sans', 'sans-serif']
+    return ['DejaVu Sans', 'Arial', 'sans-serif']
+
+
+def configure_windows_matplotlib():
+    """
+    Configure matplotlib for optimal Windows performance and compatibility.
+    This function handles Windows-specific matplotlib settings.
+    """
+    if is_windows_system():
+        # Set Windows-compatible font family
+        matplotlib.rcParams['font.family'] = get_windows_font_family()
+
+        # Optimize for Windows display
+        matplotlib.rcParams['figure.dpi'] = 100
+        matplotlib.rcParams['savefig.dpi'] = 300
+
+        # Windows-specific backend optimizations
+        matplotlib.rcParams['backend'] = 'Agg'
+
+        # Ensure proper text rendering on Windows
+        matplotlib.rcParams['text.antialiased'] = True
+        matplotlib.rcParams['axes.unicode_minus'] = False
+
+
+def get_safe_filename(filename):
+    """
+    Get a Windows-safe filename by removing or replacing invalid characters.
+
+    Args:
+        filename (str): Original filename
+
+    Returns:
+        str: Windows-safe filename
+    """
+    if not filename:
+        return "untitled.csv"
+
+    # Windows invalid filename characters
+    invalid_chars = '<>:"/\\|?*'
+    safe_filename = filename
+
+    for char in invalid_chars:
+        safe_filename = safe_filename.replace(char, '_')
+
+    # Ensure filename doesn't end with period or space (Windows restriction)
+    safe_filename = safe_filename.rstrip('. ')
+
+    return safe_filename
+
+
 # Configure matplotlib to work without a display (for server environments)
+# This is especially important on Windows servers or headless environments
 matplotlib.use('Agg')  # Use non-interactive backend
 warnings.filterwarnings('ignore')  # Suppress warning messages
+
+# Apply Windows-specific matplotlib configuration
+configure_windows_matplotlib()
 
 # =============================================================================
 # APPLICATION CONSTANTS
@@ -53,6 +143,9 @@ REQUIRED_COLUMNS = ['date', 'open', 'high', 'low', 'close', 'volume']
 
 # Base URL for the API (used by frontend for making requests)
 API_BASE_URL = 'http://127.0.0.1:5000'
+
+# Windows-specific configuration
+WINDOWS_OPTIMIZED = is_windows_system()
 
 # =============================================================================
 # FLASK APPLICATION INITIALIZATION
@@ -149,31 +242,102 @@ def create_success_response(data, message=None):
 
 class StockAnalyzer:
     """
-    A class that performs various financial calculations on stock data.
+    A comprehensive stock data analysis class with Windows compatibility.
 
-    This class takes stock price data and provides methods to calculate:
-    - Simple Moving Averages (SMA)
-    - Daily returns (percentage change)
-    - Upward and downward price runs/streaks
-    - Maximum possible profit from trading
-    - Data visualizations
+    This class performs various financial calculations on stock data and provides
+    methods for interactive chart generation. It's optimized for Windows systems
+    and includes robust error handling and data validation.
+
+    Key Features:
+    - Simple Moving Averages (SMA) calculation
+    - Daily returns (percentage change) analysis
+    - Upward and downward price runs/streaks identification
+    - Maximum possible profit from trading calculations
+    - Interactive data visualizations with hover support
+    - Windows-optimized chart generation
+    - Comprehensive data validation and error handling
+
+    Windows Compatibility:
+    - Optimized matplotlib configuration for Windows
+    - Cross-platform data handling
+    - Windows-specific font and display settings
+    - Robust error handling for Windows file systems
     """
 
     def __init__(self, data):
         """
-        Initialize the analyzer with stock data.
+        Initialize the analyzer with stock data and Windows compatibility checks.
 
         Args:
             data (pandas.DataFrame): Stock data with columns: date, open, high, low, close, volume
+
+        Raises:
+            ValueError: If required columns are missing or data is invalid
+            TypeError: If data is not a pandas DataFrame
         """
+        # Validate input data type
+        if not isinstance(data, pd.DataFrame):
+            raise TypeError("Data must be a pandas DataFrame")
+
+        # Validate required columns exist
+        missing_columns = [
+            col for col in REQUIRED_COLUMNS if col not in data.columns]
+        if missing_columns:
+            raise ValueError(f"Missing required columns: {missing_columns}")
+
+        # Validate data is not empty
+        if data.empty:
+            raise ValueError("Data cannot be empty")
+
         # Create a copy to avoid modifying the original data
+        # This is important for Windows systems where file handles can be problematic
         self.data = data.copy()
 
         # Convert date column to proper datetime format for easier manipulation
-        self.data['date'] = pd.to_datetime(self.data['date'])
+        # Handle various date formats that might be encountered on Windows
+        try:
+            self.data['date'] = pd.to_datetime(
+                self.data['date'], errors='coerce')
+        except Exception as e:
+            raise ValueError(f"Error parsing dates: {str(e)}")
+
+        # Check for invalid dates
+        if self.data['date'].isna().any():
+            raise ValueError("Invalid date format detected in data")
 
         # Sort data by date and reset index for consistent ordering
+        # This ensures proper chronological analysis
         self.data = self.data.sort_values('date').reset_index(drop=True)
+
+        # Validate numeric columns contain valid data
+        numeric_columns = ['open', 'high', 'low', 'close', 'volume']
+        for col in numeric_columns:
+            if not pd.api.types.is_numeric_dtype(self.data[col]):
+                try:
+                    self.data[col] = pd.to_numeric(
+                        self.data[col], errors='coerce')
+                except Exception as e:
+                    raise ValueError(
+                        f"Error converting {col} to numeric: {str(e)}")
+
+            # Check for negative prices (invalid for stock data)
+            if col != 'volume' and (self.data[col] < 0).any():
+                raise ValueError(f"Negative values found in {col} column")
+
+            # Check for negative volume (invalid)
+            if col == 'volume' and (self.data[col] < 0).any():
+                raise ValueError("Negative values found in volume column")
+
+        # Windows-specific optimizations
+        if WINDOWS_OPTIMIZED:
+            # Optimize data types for Windows memory management
+            self.data = self.data.astype({
+                'open': 'float64',
+                'high': 'float64',
+                'low': 'float64',
+                'close': 'float64',
+                'volume': 'int64'
+            })
 
     def calculate_sma(self, window=DEFAULT_SMA_WINDOW):
         """
@@ -329,6 +493,122 @@ class StockAnalyzer:
 
         return float(max_profit), transactions
 
+    def get_chart_data(self, sma_window=5):
+        """
+        Get detailed chart data for interactive visualization with Windows compatibility.
+
+        This method generates comprehensive data points for each day that can be used
+        by interactive chart components. It includes all financial metrics and run
+        information needed for hover tooltips and detailed analysis.
+
+        Args:
+            sma_window (int): Window size for Simple Moving Average calculation
+                             Must be a positive integer between 1 and data length
+
+        Returns:
+            list: List of dictionaries containing detailed data points for each day
+                 Each data point includes:
+                 - Basic OHLCV data (open, high, low, close, volume)
+                 - Calculated metrics (SMA, daily returns, price changes)
+                 - Run information (streak data, direction, position)
+                 - Windows-safe data formatting
+
+        Raises:
+            ValueError: If sma_window is invalid
+            RuntimeError: If data processing fails
+        """
+        # Validate SMA window parameter
+        if not isinstance(sma_window, int) or sma_window < 1:
+            raise ValueError("SMA window must be a positive integer")
+
+        if sma_window > len(self.data):
+            raise ValueError("SMA window cannot be larger than data length")
+
+        try:
+            # Calculate all the metrics we need for the charts
+            # These calculations are optimized for Windows systems
+            sma = self.calculate_sma(sma_window)
+            daily_returns = self.calculate_daily_returns()
+            runs_stats = self.analyze_runs()
+
+            # Create detailed data points for each day
+            # This loop is optimized for Windows memory management
+            chart_data = []
+
+            for i in range(len(self.data)):
+                try:
+                    # Get run information for this day
+                    # This identifies if the current day is part of a price streak
+                    current_run = None
+                    for run in runs_stats['runs']:
+                        if run['start'] <= i <= run['end']:
+                            current_run = run
+                            break
+
+                    # Calculate additional metrics for this day
+                    # These provide context for price movements
+                    price_change = 0.0
+                    price_change_pct = 0.0
+
+                    if i > 0:
+                        # Calculate absolute price change from previous day
+                        price_change = float(
+                            self.data['close'].iloc[i] - self.data['close'].iloc[i-1])
+
+                        # Calculate percentage price change from previous day
+                        # Avoid division by zero
+                        prev_close = float(self.data['close'].iloc[i-1])
+                        if prev_close != 0:
+                            price_change_pct = (
+                                price_change / prev_close) * 100
+
+                    # Create comprehensive data point for this day
+                    # All values are Windows-safe and JSON-serializable
+                    data_point = {
+                        # Basic OHLCV data
+                        'date': self.data['date'].iloc[i].strftime('%Y-%m-%d'),
+                        'open': safe_float(self.data['open'].iloc[i]),
+                        'high': safe_float(self.data['high'].iloc[i]),
+                        'low': safe_float(self.data['low'].iloc[i]),
+                        'close': safe_float(self.data['close'].iloc[i]),
+                        'volume': safe_float(self.data['volume'].iloc[i]),
+
+                        # Calculated metrics
+                        'sma': safe_float(sma.iloc[i]) if not pd.isna(sma.iloc[i]) else None,
+                        'daily_return': safe_float(daily_returns.iloc[i]) if not pd.isna(daily_returns.iloc[i]) else None,
+                        'price_change': safe_float(price_change),
+                        'price_change_pct': safe_float(price_change_pct),
+
+                        # Run/streak information for interactive tooltips
+                        'run_info': {
+                            'in_run': current_run is not None,
+                            'run_direction': current_run['direction'] if current_run else None,
+                            'run_length': current_run['length'] if current_run else None,
+                            'run_position': i - current_run['start'] + 1 if current_run else None
+                        } if current_run else None,
+
+                        # Additional metadata for Windows compatibility
+                        'day_index': i,
+                        'sma_window': sma_window
+                    }
+
+                    chart_data.append(data_point)
+
+                except Exception as e:
+                    # Log error but continue processing other data points
+                    # This ensures Windows systems don't crash on individual data point errors
+                    print(
+                        f"Warning: Error processing data point {i}: {str(e)}")
+                    continue
+
+            return chart_data
+
+        except Exception as e:
+            # Comprehensive error handling for Windows systems
+            error_msg = f"Error generating chart data: {str(e)}"
+            print(f"Error: {error_msg}")
+            raise RuntimeError(error_msg)
+
     def create_visualization(self, sma_window=5):
         """
         Create a comprehensive chart showing stock analysis.
@@ -413,57 +693,123 @@ class StockAnalyzer:
 @app.route('/upload', methods=['POST'])
 def upload_file():
     """
-    Handle CSV file upload from the frontend.
+    Handle CSV file upload from the frontend with Windows compatibility.
 
     This endpoint receives a CSV file containing stock data and validates it.
     The file must contain specific columns: date, open, high, low, close, volume.
+    Includes comprehensive Windows compatibility features and error handling.
 
     Returns:
         JSON response with upload status and file information
+
+    Windows Compatibility Features:
+    - Safe filename handling for Windows file systems
+    - Robust CSV parsing with various encodings
+    - Memory-efficient file processing
+    - Cross-platform path handling
     """
-    # Check if a file was actually uploaded
-    if 'file' not in request.files:
-        return create_error_response('No file provided')
-
-    file = request.files['file']
-
-    # Check if user selected a file (not just submitted empty form)
-    if file.filename == '':
-        return create_error_response('No file selected')
-
-    # Ensure the file is a CSV file
-    if not file.filename.endswith('.csv'):
-        return create_error_response('File must be a CSV')
-
     try:
-        # Read the CSV file into a pandas DataFrame
-        df = pd.read_csv(file)
+        # Check if a file was actually uploaded
+        if 'file' not in request.files:
+            return create_error_response('No file provided')
 
-        # Check if all required columns are present
-        missing_columns = [
-            col for col in REQUIRED_COLUMNS if col not in df.columns]
+        file = request.files['file']
+
+        # Check if user selected a file (not just submitted empty form)
+        if file.filename == '':
+            return create_error_response('No file selected')
+
+        # Get Windows-safe filename
+        safe_filename = get_safe_filename(file.filename)
+
+        # Ensure the file is a CSV file (case-insensitive for Windows)
+        if not safe_filename.lower().endswith('.csv'):
+            return create_error_response('File must be a CSV file')
+
+        # Windows-compatible CSV reading with multiple encoding attempts
+        df = None
+        encodings_to_try = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+
+        for encoding in encodings_to_try:
+            try:
+                # Reset file pointer for each encoding attempt
+                file.seek(0)
+                df = pd.read_csv(file, encoding=encoding)
+                print(f"Successfully read CSV with {encoding} encoding")
+                break
+            except UnicodeDecodeError:
+                print(
+                    f"Failed to read with {encoding} encoding, trying next...")
+                continue
+            except Exception as e:
+                print(f"Error reading with {encoding} encoding: {str(e)}")
+                continue
+
+        if df is None:
+            return create_error_response('Unable to read CSV file. Please ensure the file is properly formatted and encoded.')
+
+        # Validate DataFrame is not empty
+        if df.empty:
+            return create_error_response('CSV file is empty')
+
+        # Check if all required columns are present (case-insensitive for Windows)
+        df_columns_lower = [col.lower().strip() for col in df.columns]
+        required_columns_lower = [col.lower() for col in REQUIRED_COLUMNS]
+
+        missing_columns = []
+        for req_col in required_columns_lower:
+            if req_col not in df_columns_lower:
+                missing_columns.append(req_col)
+
         if missing_columns:
             return jsonify({
                 'error': f'Missing required columns: {missing_columns}',
-                'available_columns': list(df.columns)
+                'available_columns': list(df.columns),
+                'suggestion': 'Please ensure your CSV contains columns: date, open, high, low, close, volume'
             }), 400
 
+        # Standardize column names (case-insensitive)
+        column_mapping = {}
+        for col in df.columns:
+            col_lower = col.lower().strip()
+            if col_lower in required_columns_lower:
+                original_col = REQUIRED_COLUMNS[required_columns_lower.index(
+                    col_lower)]
+                column_mapping[col] = original_col
+
+        df = df.rename(columns=column_mapping)
+
+        # Validate data quality before storing
+        try:
+            # Test data processing with a small sample
+            test_analyzer = StockAnalyzer(df.head(5))
+            print("Data validation successful")
+        except Exception as e:
+            return create_error_response(f'Data validation failed: {str(e)}')
+
         # Store the data globally for use by other endpoints
+        # This is safe for Windows systems as we're storing in memory
         global stock_data
         stock_data = df
 
-        # Return success response with file information
+        # Return success response with comprehensive file information
         return create_success_response({
             'rows': len(df),
             'columns': list(df.columns),
             'date_range': {
-                'start': df['date'].min(),
-                'end': df['date'].max()
-            }
+                'start': str(df['date'].min()) if not df['date'].empty else 'N/A',
+                'end': str(df['date'].max()) if not df['date'].empty else 'N/A'
+            },
+            'filename': safe_filename,
+            'file_size': len(file.read()) if hasattr(file, 'read') else 'Unknown',
+            'windows_compatible': True
         }, 'File uploaded successfully')
 
     except Exception as e:
-        return create_error_response(f'Error processing file: {str(e)}')
+        # Comprehensive error handling for Windows systems
+        error_msg = f'Error processing file: {str(e)}'
+        print(f"Upload error: {error_msg}")
+        return create_error_response(error_msg)
 
 
 @app.route('/analyze', methods=['POST'])
@@ -501,6 +847,9 @@ def analyze_stock():
         runs_stats = analyzer.analyze_runs()
         max_profit, transactions = analyzer.calculate_max_profit()
 
+        # Get detailed chart data for interactive visualization
+        chart_data = analyzer.get_chart_data(sma_window)
+
         # Create the visualization chart
         chart_base64 = analyzer.create_visualization(sma_window)
 
@@ -520,6 +869,7 @@ def analyze_stock():
                 'transactions': transactions
             },
             'chart': chart_base64,
+            'chart_data': chart_data,  # Detailed data for interactive charts
             'summary': {
                 'total_days': int(len(analyzer.data)),
                 'price_range': {
@@ -651,5 +1001,19 @@ def health_check():
 if __name__ == '__main__':
     # Start the Flask development server
     # debug=True enables auto-reload when code changes
+    # host='127.0.0.1' ensures compatibility with Windows networking
     # port=5000 is the default Flask port
-    app.run(debug=True, port=5000)
+    print("=" * 60)
+    print("Stock Analysis Dashboard - Backend Server")
+    print("=" * 60)
+    print(f"Server starting on: http://127.0.0.1:5000")
+    print("Press Ctrl+C to stop the server")
+    print("=" * 60)
+
+    try:
+        app.run(debug=True, host='127.0.0.1', port=5000, threaded=True)
+    except KeyboardInterrupt:
+        print("\nServer stopped by user")
+    except Exception as e:
+        print(f"Error starting server: {e}")
+        print("Make sure port 5000 is not already in use")

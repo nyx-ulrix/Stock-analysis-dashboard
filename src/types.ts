@@ -4,6 +4,28 @@
 // These interfaces define the structure of data we expect from the backend API
 
 /**
+ * Structure of a single data point for interactive charts
+ */
+export interface ChartDataPoint {
+  date: string                       // Date in YYYY-MM-DD format
+  open: number | null                // Opening price
+  high: number | null                // Highest price of the day
+  low: number | null                 // Lowest price of the day
+  close: number | null               // Closing price
+  volume: number | null              // Trading volume
+  sma: number | null                 // Simple Moving Average value
+  daily_return: number | null        // Daily return percentage
+  price_change: number | null        // Absolute price change from previous day
+  price_change_pct: number | null    // Percentage price change from previous day
+  run_info: {
+    in_run: boolean                  // Whether this day is part of a run
+    run_direction: string | null     // Direction of the run (upward/downward)
+    run_length: number | null        // Length of the current run
+    run_position: number | null      // Position within the run (1-based)
+  } | null
+}
+
+/**
  * Structure of analysis results returned from the backend
  */
 export interface AnalysisResults {
@@ -34,6 +56,7 @@ export interface AnalysisResults {
     }>
   }
   chart: string                      // Base64-encoded chart image
+  chart_data: ChartDataPoint[]       // Detailed data points for interactive charts
   summary: {
     total_days: number               // Total number of trading days
     price_range: {

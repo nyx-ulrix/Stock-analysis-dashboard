@@ -12,13 +12,13 @@
 // - Providing the main UI layout and structure
 
 // React hooks for managing component state
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // Type definitions for our data structures
 import { AnalysisResults, ValidationResults } from './types'
 
 // API functions for communicating with the backend
-import { runAnalysis, runValidation } from './api'
+import { runAnalysis, runValidation, checkBackendHealth } from './api'
 
 // UI components that make up the application interface
 import { FileUpload } from './components/FileUpload'
@@ -51,6 +51,31 @@ function App() {
   
   // Analysis configuration state
   const [smaWindow, setSmaWindow] = useState<number>(5)  // Simple Moving Average window size
+  
+  // Backend connectivity state
+  const [backendConnected, setBackendConnected] = useState<boolean>(false)  // Backend server status
+
+  // =============================================================================
+  // EFFECTS
+  // =============================================================================
+  // React effects that run when the component mounts or when dependencies change
+  
+  /**
+   * Check backend connectivity when the component mounts
+   * This ensures the user knows if the backend server is running
+   */
+  useEffect(() => {
+    const checkConnection = async () => {
+      const isConnected = await checkBackendHealth()
+      setBackendConnected(isConnected)
+      
+      if (!isConnected) {
+        setUploadStatus('⚠️ Backend server not running. Please start the Flask backend first.')
+      }
+    }
+    
+    checkConnection()
+  }, [])
 
   // =============================================================================
   // EVENT HANDLERS
@@ -87,6 +112,12 @@ function App() {
    * This function calls the backend API to perform comprehensive stock analysis
    */
   const handleRunAnalysis = async () => {
+    // Check if backend is connected
+    if (!backendConnected) {
+      setUploadStatus('❌ Backend server not running. Please start the Flask backend first.')
+      return
+    }
+
     // Validate that a file has been uploaded before running analysis
     if (!file) {
       setUploadStatus('❌ Please upload a file first')
@@ -117,6 +148,12 @@ function App() {
    * This function calls the backend API to run automated tests
    */
   const handleRunValidation = async () => {
+    // Check if backend is connected
+    if (!backendConnected) {
+      setUploadStatus('❌ Backend server not running. Please start the Flask backend first.')
+      return
+    }
+
     // Set loading state and show progress message
     setLoading(true)
     setUploadStatus('Running validation tests...')
@@ -148,6 +185,30 @@ function App() {
         {/* Application Header */}
         <h1 className="text-4xl font-bold mb-8 text-center">Stock Analysis Dashboard</h1>
         
+        {/* Backend Status Indicator */}
+        <div className={`mb-6 p-4 rounded-lg text-center ${
+          backendConnected 
+            ? 'bg-green-900 border border-green-500' 
+            : 'bg-red-900 border border-red-500'
+        }`}>
+          <div className="flex items-center justify-center space-x-2">
+            <div className={`w-3 h-3 rounded-full ${
+              backendConnected ? 'bg-green-400' : 'bg-red-400'
+            }`}></div>
+            <span className="font-semibold">
+              {backendConnected 
+                ? '✅ Backend Connected' 
+                : '❌ Backend Disconnected'
+              }
+            </span>
+          </div>
+          {!backendConnected && (
+            <p className="mt-2 text-sm text-gray-300">
+              Please start the Flask backend server first. Run: <code className="bg-gray-800 px-2 py-1 rounded">python app.py</code> in the backend directory.
+            </p>
+          )}
+        </div>
+        
         {/* File Upload Component - Allows users to select and upload CSV files */}
         <FileUpload
           onFileSelect={handleFileSelect}
@@ -171,7 +232,7 @@ function App() {
 
         {/* Analysis Results - Displays charts and analysis data (only when available) */}
         {analysisResults && (
-          <AnalysisResultsComponent results={analysisResults} />
+          <AnalysisResultsComponent results={analysisResults} smaWindow={smaWindow} />
         )}
 
         {/* Validation Results - Shows test results (only when available) */}

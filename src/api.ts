@@ -14,6 +14,24 @@
 const API_BASE_URL = 'http://127.0.0.1:5000'
 
 /**
+ * Check if the backend server is running and accessible
+ * @returns Promise that resolves to true if backend is available, false otherwise
+ */
+export async function checkBackendHealth(): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/health`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    return response.ok
+  } catch (error) {
+    return false
+  }
+}
+
+/**
  * Generic response structure for all API calls
  * @template T - The type of data expected in the response
  */
