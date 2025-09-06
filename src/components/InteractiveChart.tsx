@@ -255,26 +255,27 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, smaWin
   const chartData = validatedData
 
   return (
-    <div className="w-full h-96 bg-white rounded-lg shadow-lg p-4">
+    <div className="chart-container bg-transparent rounded-lg shadow-lg p-4">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">
+        <h3 className="text-lg font-semibold text-white">
           Interactive Stock Analysis
         </h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-300">
           Hover over the chart to see detailed information for each day
         </p>
       </div>
 
-      <ResponsiveContainer width="100%" height="100%">
+      <div className="chart-wrapper responsive-chart h-96">
+        <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
           <XAxis 
             dataKey="date" 
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 12, fill: '#9CA3AF' }}
             tickFormatter={(value: string) => new Date(value).toLocaleDateString()}
           />
           <YAxis 
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 12, fill: '#9CA3AF' }}
             tickFormatter={(value: number) => `$${value.toFixed(2)}`}
           />
           <Tooltip content={<CustomTooltip />} />
@@ -299,7 +300,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, smaWin
           <Line
             type="monotone"
             dataKey="close"
-            stroke="#2563eb"
+            stroke="#60a5fa"
             strokeWidth={2}
             dot={false}
             name="Closing Price"
@@ -309,7 +310,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, smaWin
           <Line
             type="monotone"
             dataKey="sma"
-            stroke="#dc2626"
+            stroke="#f87171"
             strokeWidth={2}
             strokeDasharray="5 5"
             dot={false}
@@ -320,7 +321,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, smaWin
           <Line
             type="monotone"
             dataKey="high"
-            stroke="#16a34a"
+            stroke="#4ade80"
             strokeWidth={1}
             dot={false}
             name="High"
@@ -330,31 +331,32 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({ data, smaWin
           <Line
             type="monotone"
             dataKey="low"
-            stroke="#dc2626"
+            stroke="#f87171"
             strokeWidth={1}
             dot={false}
             name="Low"
           />
         </ComposedChart>
-      </ResponsiveContainer>
+        </ResponsiveContainer>
+      </div>
 
       {/* Legend */}
       <div className="mt-4 flex flex-wrap gap-4 text-sm">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-0.5 bg-blue-600"></div>
-          <span>Closing Price</span>
+          <div className="w-4 h-0.5 bg-blue-400"></div>
+          <span className="text-gray-300">Closing Price</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-0.5 bg-red-600 border-dashed border-t-2"></div>
-          <span>SMA({smaWindow})</span>
+          <div className="w-4 h-0.5 bg-red-400 border-dashed border-t-2"></div>
+          <span className="text-gray-300">SMA({smaWindow})</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-0.5 bg-green-600"></div>
-          <span>High</span>
+          <div className="w-4 h-0.5 bg-green-400"></div>
+          <span className="text-gray-300">High</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-0.5 bg-red-600"></div>
-          <span>Low</span>
+          <div className="w-4 h-0.5 bg-red-400"></div>
+          <span className="text-gray-300">Low</span>
         </div>
       </div>
     </div>
@@ -370,26 +372,27 @@ export const DailyReturnsChart: React.FC<{ data: ChartDataPoint[] }> = ({ data }
   }))
 
   return (
-    <div className="w-full h-64 bg-white rounded-lg shadow-lg p-4">
+    <div className="chart-container bg-transparent rounded-lg shadow-lg p-4">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">
+        <h3 className="text-lg font-semibold text-white">
           Daily Returns
         </h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-300">
           Hover to see detailed return information
         </p>
       </div>
 
-      <ResponsiveContainer width="100%" height="100%">
+      <div className="chart-wrapper responsive-chart h-64">
+        <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
           <XAxis 
             dataKey="date" 
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 12, fill: '#9CA3AF' }}
             tickFormatter={(value: string) => new Date(value).toLocaleDateString()}
           />
           <YAxis 
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 12, fill: '#9CA3AF' }}
             tickFormatter={(value: number) => `${value.toFixed(1)}%`}
           />
           <Tooltip 
@@ -421,18 +424,19 @@ export const DailyReturnsChart: React.FC<{ data: ChartDataPoint[] }> = ({ data }
               return null
             }}
           />
-          <ReferenceLine y={0} stroke="#666" strokeDasharray="2 2" />
+          <ReferenceLine y={0} stroke="#9CA3AF" strokeDasharray="2 2" />
           
           <Line
             type="monotone"
             dataKey="daily_return_pct"
-            stroke="#8b5cf6"
+            stroke="#a78bfa"
             strokeWidth={2}
             dot={false}
             name="Daily Returns (%)"
           />
         </LineChart>
-      </ResponsiveContainer>
+        </ResponsiveContainer>
+      </div>
     </div>
   )
 }

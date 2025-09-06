@@ -181,7 +181,7 @@ function App() {
   
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Application Header */}
         <h1 className="text-4xl font-bold mb-8 text-center">Stock Analysis Dashboard</h1>
         

@@ -39,44 +39,52 @@ export function AnalysisResultsComponent({ results, smaWindow }: AnalysisResults
   return (
     <div className="space-y-8">
       {/* Interactive Charts Section */}
-      <div className="space-y-6">
-        <div className="bg-gray-800 rounded-lg p-6">
+      <div className="space-y-8">
+        {/* Main Price Analysis Chart */}
+        <div className="chart-section bg-gray-800 rounded-lg p-6">
           <h2 className="text-2xl font-semibold mb-4">Interactive Price Analysis</h2>
-          <p className="text-gray-300 mb-4">
+          <p className="text-gray-300 mb-6">
             Hover over the chart to see detailed information for each day
           </p>
           {/* Interactive chart with hover functionality */}
-          <InteractiveChart data={results.chart_data} smaWindow={smaWindow} />
+          <div className="w-full">
+            <InteractiveChart data={results.chart_data} smaWindow={smaWindow} />
+          </div>
         </div>
 
-        <div className="bg-gray-800 rounded-lg p-6">
+        {/* Daily Returns Chart */}
+        <div className="chart-section bg-gray-800 rounded-lg p-6">
           <h2 className="text-2xl font-semibold mb-4">Daily Returns Analysis</h2>
-          <p className="text-gray-300 mb-4">
+          <p className="text-gray-300 mb-6">
             Interactive daily returns chart with hover details
           </p>
           {/* Interactive daily returns chart */}
-          <DailyReturnsChart data={results.chart_data} />
+          <div className="w-full">
+            <DailyReturnsChart data={results.chart_data} />
+          </div>
         </div>
 
         {/* Static Chart for Reference */}
-        <div className="bg-gray-800 rounded-lg p-6">
+        <div className="chart-section bg-gray-800 rounded-lg p-6">
           <h2 className="text-2xl font-semibold mb-4">Static Analysis Chart</h2>
-          <p className="text-gray-300 mb-4">
+          <p className="text-gray-300 mb-6">
             Traditional chart view for reference
           </p>
           {/* Display the base64-encoded chart image from the backend */}
-          <img 
-            src={`data:image/png;base64,${results.chart}`} 
-            alt="Stock Analysis Chart"
-            className="w-full h-auto rounded"
-          />
+          <div className="w-full flex justify-center">
+            <img 
+              src={`data:image/png;base64,${results.chart}`} 
+              alt="Stock Analysis Chart"
+              className="max-w-full h-auto rounded shadow-lg"
+            />
+          </div>
         </div>
       </div>
 
       {/* Summary Statistics Cards Section */}
       <div className="bg-gray-800 rounded-lg p-6">
-        <h2 className="text-2xl font-semibold mb-4">Summary Statistics</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <h2 className="text-2xl font-semibold mb-6">Summary Statistics</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Total Days Card */}
           <div className="bg-gray-700 p-4 rounded">
             <div className="text-sm text-gray-300">Total Days</div>
@@ -107,8 +115,8 @@ export function AnalysisResultsComponent({ results, smaWindow }: AnalysisResults
 
       {/* Runs Analysis Section - Price Streaks and Trends */}
       <div className="bg-gray-800 rounded-lg p-6">
-        <h2 className="text-2xl font-semibold mb-4">Runs Analysis</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <h2 className="text-2xl font-semibold mb-6">Runs Analysis</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Upward Runs Count */}
           <div className="bg-green-700 p-4 rounded">
             <div className="text-sm text-green-200">Upward Runs</div>
@@ -137,10 +145,10 @@ export function AnalysisResultsComponent({ results, smaWindow }: AnalysisResults
 
       {/* Maximum Profit Analysis Section */}
       <div className="bg-gray-800 rounded-lg p-6">
-        <h2 className="text-2xl font-semibold mb-4">Maximum Profit Analysis</h2>
+        <h2 className="text-2xl font-semibold mb-6">Maximum Profit Analysis</h2>
         
         {/* Profit Summary Card */}
-        <div className="bg-gray-700 p-4 rounded mb-4">
+        <div className="bg-gray-700 p-6 rounded mb-6">
           <div className="text-lg font-bold text-green-400">
             Total Maximum Profit: ${results.max_profit.total_profit.toFixed(2)}
           </div>
@@ -152,9 +160,9 @@ export function AnalysisResultsComponent({ results, smaWindow }: AnalysisResults
         {/* Transaction Details Table - Only show if there are transactions */}
         {results.max_profit.transactions.length > 0 && (
           <div>
-            <h3 className="text-lg font-semibold mb-2">Transaction Details</h3>
+            <h3 className="text-lg font-semibold mb-4">Transaction Details</h3>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-full">
                 <thead>
                   <tr className="border-b border-gray-600">
                     <th className="text-left py-2">Buy Day</th>

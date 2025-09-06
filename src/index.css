@@ -22,3 +22,26 @@
     @apply bg-gray-900 text-white;
   }
 }
+
+/* Custom component styles for charts */
+@layer components {
+  /* Ensure charts fit properly in their containers */
+  .chart-container {
+    @apply w-full overflow-hidden;
+  }
+  
+  /* Prevent chart overlapping */
+  .chart-wrapper {
+    @apply relative w-full;
+  }
+  
+  /* Responsive chart sizing */
+  .responsive-chart {
+    @apply w-full h-full min-h-64;
+  }
+  
+  /* Ensure proper spacing between chart sections */
+  .chart-section {
+    @apply mb-8 last:mb-0;
+  }
+}
